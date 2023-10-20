@@ -118,40 +118,55 @@ public class ForestView extends JFrame {
     }
 
     private void simulation() {
-        dynamicBoard.getComponentCount();
-        int count = 0;
-        for(int i = 0; i < dynamicBoard.getComponentCount(); i++){
-                Component cell = dynamicBoard.getComponent(count);
 
-                Component cellAboveI = dynamicBoard.getComponent(cell.getY() == 0 ? 0 : cell.getY() - 10);
-                Component cellBellowI = dynamicBoard.getComponent(cell.getY() == 490 ? 490 : cell.getY() + 10);
-               // Component cellLeftI = dynamicBoard.getComponent(cell.getX() - 10);
-                Component cellRightI = dynamicBoard.getComponent(i + 1);
+        //ultimo item = 5049, primeiro = 0, cada fileira tem 101
+        for (int i = 0; i < dynamicBoard.getComponentCount(); i++) {
+            Component cell = dynamicBoard.getComponent(i);
 
-                if (cell.getBackground() == Color.RED) {
-                    try{
-                        Thread.sleep(300);
-                    }catch (InterruptedException e){}
-                    cellRightI.setBackground(Color.RED);
+            int row = i / 101;  // Número da fileira, tabuleiro pequeno
+            int col = i % 101;  // Número da coluna ""
+
+            int cellAboveI = i - 101;
+            int cellBelowI = i + 101;
+            int cellLeftI = i - 1;
+            int cellRightI = i + 1;
+
+            if (col == 0) {
+                cellLeftI = -1;
+            }
+
+            if (col == 100) {
+                cellRightI = -1;
+            }
+
+            if (row == 0) {
+                cellAboveI = -1;
+            }
+
+            if (row == 49) {
+                cellBelowI = -1;
+            }
+
+            if (cell.getBackground() == Color.RED) {
+                try {
+                    Thread.sleep(300);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
 
-               /* if (count % 2 == 0) {
-                    cellAboveI -= 1;
-                }
-
-                if (cellAboveI >= 0 && cellAboveI < dynamicBoard.getComponentCount()) {
-                    dynamicBoard.getComponent(cellAboveI).setBackground(Color.RED);
-                }
-
-                                if (cellLeftI >= 0 && cellLeftI < dynamicBoard.getComponentCount()) {
-                    dynamicBoard.getComponent(cellLeftI).setBackground(Color.RED);
-                }
-
-                if (cellRightI >= 0 && cellRightI < dynamicBoard.getComponentCount()) {
+                if (cellRightI != -1) {
                     dynamicBoard.getComponent(cellRightI).setBackground(Color.RED);
                 }
-*/
-                count++;
+                if (cellBelowI != -1) {
+                     dynamicBoard.getComponent(cellBelowI).setBackground(Color.RED);
+                }
+                if (cellAboveI != -1) {
+                    dynamicBoard.getComponent(cellBelowI).setBackground(Color.RED);
+                }
+                if (cellLeftI != -1) {
+                    dynamicBoard.getComponent(cellBelowI).setBackground(Color.RED);
+                }
+            }
         }
     }
 }
