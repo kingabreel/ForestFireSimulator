@@ -1,35 +1,31 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 
 public class ForestController extends JFrame {
-    private static final int TAMANHO_MATRIZ = 50;
-    private static final Color COR_VERDE = Color.GREEN;
-    private static final Color COR_BORDA = Color.BLACK;
-
+    private static final int MATRIX_SIZE = 50;
+    private Timer timer;
     private JPanel[][] cells;
-    private Color[][] matrizCores;
+    private Color[][] collorMatrix;
 
     public ForestController() {
-        this.matrizCores = new Color[TAMANHO_MATRIZ][TAMANHO_MATRIZ];
-        inicializarMatrizVerde();
+        this.collorMatrix = new Color[MATRIX_SIZE][MATRIX_SIZE];
+        startMatrix();
         initUI();
     }
 
     private void initUI() {
+        setTitle("Fire Simulator");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(500, 500);
         setLocationRelativeTo(null);
 
-        JPanel panel = new JPanel(new GridLayout(TAMANHO_MATRIZ, TAMANHO_MATRIZ));
-        cells = new JPanel[TAMANHO_MATRIZ][TAMANHO_MATRIZ];
+        JPanel panel = new JPanel(new GridLayout(MATRIX_SIZE, MATRIX_SIZE));
+        cells = new JPanel[MATRIX_SIZE][MATRIX_SIZE];
 
-        for (int i = 0; i < TAMANHO_MATRIZ; i++) {
-            for (int j = 0; j < TAMANHO_MATRIZ; j++) {
-                cells[i][j] = criarCelula(i, j);
+        for (int i = 0; i < MATRIX_SIZE; i++) {
+            for (int j = 0; j < MATRIX_SIZE; j++) {
+                cells[i][j] = createCell(i, j);
                 panel.add(cells[i][j]);
             }
         }
@@ -38,11 +34,7 @@ public class ForestController extends JFrame {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    try {
-                        storeRedCell();
-                    } catch (InterruptedException ex) {
-                        throw new RuntimeException(ex);
-                    }
+                    startSimulation();
                 }
             }
         });
@@ -51,65 +43,92 @@ public class ForestController extends JFrame {
         setVisible(true);
     }
 
-    private void inicializarMatrizVerde() {
-        for (int i = 0; i < TAMANHO_MATRIZ; i++) {
-            for (int j = 0; j < TAMANHO_MATRIZ; j++) {
-                matrizCores[i][j] = COR_VERDE;
-                if (i == 0 || i == TAMANHO_MATRIZ - 1) matrizCores[i][j] = Color.BLUE;
-                if (j == 0 || j == TAMANHO_MATRIZ - 1) matrizCores[i][j] = Color.BLUE;
+    private void startMatrix() {
+        for (int i = 0; i < MATRIX_SIZE; i++) {
+            for (int j = 0; j < MATRIX_SIZE; j++) {
+                collorMatrix[i][j] = Color.GREEN;
+
+                //These lines are to create a river as borders of the island
+                if (i == 0 || i == MATRIX_SIZE - 1) collorMatrix[i][j] = Color.BLUE;
+                if (j == 0 || j == MATRIX_SIZE - 1) collorMatrix[i][j] = Color.BLUE;
             }
         }
     }
 
-    private JPanel criarCelula(int linha, int coluna) {
+    private JPanel createCell(int line, int column) {
         JPanel cellPanel = new JPanel();
-        cellPanel.setBackground(matrizCores[linha][coluna]);
-        cellPanel.setBorder(BorderFactory.createLineBorder(COR_BORDA));
+        cellPanel.setBackground(collorMatrix[line][column]);
+        cellPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 
         cellPanel.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                toggleCellState(linha, coluna);
+                paintUsingMouse(line, column);
             }
         });
         return cellPanel;
     }
 
-    private void toggleCellState(int linha, int coluna) {
-        if (matrizCores[linha][coluna] == Color.GREEN) {
-            if (!((linha - 1 < 0) || (linha + 1 > TAMANHO_MATRIZ) || (coluna - 1 < 0) || (coluna + 1 > TAMANHO_MATRIZ))) {
-                matrizCores[linha][coluna] = Color.RED;
-            }
-        } else if (matrizCores[linha][coluna] == Color.RED) {
-            if (linha > 0 && linha < TAMANHO_MATRIZ - 1 && coluna > 0 && coluna < TAMANHO_MATRIZ - 1) {
-                if (matrizCores[linha - 1][coluna - 1] != Color.RED && matrizCores[linha + 1][coluna + 1] != Color.RED &&
-                        matrizCores[linha - 1][coluna] != Color.RED && matrizCores[linha][coluna - 1] != Color.RED) {
-                    matrizCores[linha][coluna] = Color.GREEN;
-                }
-            } else {
-                matrizCores[linha][coluna] = Color.GREEN;
-            }
+
+    private void paintUsingMouse(int line, int column){
+        if (collorMatrix[line][column] == Color.GREEN) {
+            collorMatrix[line][column] = Color.RED;
+        } else if (collorMatrix[line][column] == Color.RED) {
+            collorMatrix[line][column] = Color.BLUE;
+        } else if (collorMatrix[line][column] == Color.BLUE) {
+            collorMatrix[line][column] = Color.GREEN;
         }
-        cells[linha][coluna].setBackground(matrizCores[linha][coluna]);
+        cells[line][column].setBackground(collorMatrix[line][column]);
     }
 
-    private void storeRedCell() throws InterruptedException {
-        for (int i = 0; i < TAMANHO_MATRIZ; i++) {
-            for (int j = 0; j < TAMANHO_MATRIZ; j++) {
-                if (matrizCores[i][j] == Color.RED) {
-                    atualizarCelula(i + 1, j);
-                    atualizarCelula(i - 1, j);
-                    atualizarCelula(i, j + 1);
-                    atualizarCelula(i, j - 1);
+    //this method will update the cell state when the user press to start
+    private void cellState(int line, int column) {
+        if (collorMatrix[line][column] == Color.GREEN) {
+            if (!((line - 1 < 0) || (line + 1 > MATRIX_SIZE) || (column - 1 < 0) || (column + 1 > MATRIX_SIZE))) {
+                collorMatrix[line][column] = Color.RED;
+            }
+        } else if (collorMatrix[line][column] == Color.RED) {
+            if (line > 0 && line < MATRIX_SIZE - 1 && column > 0 && column < MATRIX_SIZE - 1) {
+                if (collorMatrix[line - 1][column - 1] != Color.RED && collorMatrix[line + 1][column + 1] != Color.RED &&
+                        collorMatrix[line - 1][column] != Color.RED && collorMatrix[line][column - 1] != Color.RED) {
+                    collorMatrix[line][column] = Color.GREEN;
+                }
+            } else {
+                collorMatrix[line][column] = Color.GREEN;
+            }
+        }
+        cells[line][column].setBackground(collorMatrix[line][column]);
+    }
+
+    private void storeRedCell() {
+        for (int i = 0; i < MATRIX_SIZE; i++) {
+            for (int j = 0; j < MATRIX_SIZE; j++) {
+                if (collorMatrix[i][j] == Color.RED) {
+                    updateCell(i + 1, j);
+                    updateCell(i - 1, j);
+                    updateCell(i, j + 1);
+                    updateCell(i, j - 1);
                 }
             }
         }
     }
-    private void atualizarCelula(int linha, int coluna) {
+    private void updateCell(int line, int column) {
         SwingUtilities.invokeLater(() -> {
-            if (linha >= 0 && linha < TAMANHO_MATRIZ && coluna >= 0 && coluna < TAMANHO_MATRIZ) {
-                toggleCellState(linha, coluna);
+            if (line >= 0 && line < MATRIX_SIZE && column >= 0 && column < MATRIX_SIZE) {
+                cellState(line, column);
             }
         });
+    }
+
+    private void startSimulation() {
+        if (timer == null) {
+            timer = new Timer(700, new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    storeRedCell();
+                }
+            });
+            timer.start();
+        }
     }
 }
